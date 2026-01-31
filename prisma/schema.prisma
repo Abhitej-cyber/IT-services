@@ -1,0 +1,37 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Default to sqlite for easy local dev, user can change to postgres/mysql
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String // For auth
+  role      String   @default("USER") // ADMIN, USER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+}
+
+model Asset {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  assetTag    String   @unique
+  serialNumber String?
+  status      String   @default("AVAILABLE") // AVAILABLE, ASSIGNED, MAINTENANCE, RETIRED
+  type        String // LAPTOP, MONITOR, LICENSE, etc.
+  purchaseDate DateTime?
+  
+  assignedTo  User?    @relation(fields: [userId], references: [id])
+  userId      String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
