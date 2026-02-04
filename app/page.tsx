@@ -1,35 +1,30 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+
 export default function Home() {
     return (
-        <main className="flex min-h-screen flex-col items-center justify-between p-24">
-            <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-                <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-                    IT Asset Management System
+        <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-background relative overflow-hidden">
+            <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
+            <div className="absolute h-full w-full bg-background [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+
+            <div className="z-10 text-center space-y-8">
+                <h1 className="text-6xl font-bold tracking-tight text-primary sm:text-7xl">
+                    Smart IT
+                </h1>
+                <p className="max-w-2xl text-lg text-muted-foreground mx-auto">
+                    Advanced Asset & Service Management System for Modern Institutions.
+                    Streamline operations, track assets, and manage requests efficiently.
                 </p>
-            </div>
 
-            <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-                <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-                    <h2 className="mb-3 text-2xl font-semibold">
-                        Dashboard{" "}
-                        <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className="m-0 max-w-[30ch] text-sm opacity-50">
-                        View asset statistics and alerts.
-                    </p>
-                </div>
+                <div className="flex gap-4 justify-center">
+                    <Link
+                        href="/login"
+                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                        Login to Dashboard
+                        <ArrowRight className="h-4 w-4" />
+                    </Link>
 
-                <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-                    <h2 className="mb-3 text-2xl font-semibold">
-                        Assets{" "}
-                        <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className="m-0 max-w-[30ch] text-sm opacity-50">
-                        Manage hardware and software inventory.
-                    </p>
                 </div>
             </div>
         </main>

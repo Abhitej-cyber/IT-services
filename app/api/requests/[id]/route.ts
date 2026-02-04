@@ -1,0 +1,130 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function PATCH(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const session = await getServerSession(authOptions);
+
+        if (!session || (session.user.role !== "DEAN" && session.user.role !== "ADMIN")) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        }
+
+        const body = await req.json();
+        const { status, remarks, assignedAdminId } = body;
+
+        const updateData: any = {
+            status,
+            remarks,
+        };
+
+        if (session.user.role === "DEAN") {
+            updateData.approvedById = session.user.id;
+            updateData.approvedAt = new Date();
+        }
+
+        if (session.user.role === "ADMIN") {
+            if (status === "COMPLETED") {
+                updateData.completedAt = new Date();
+            }
+        }
+
+        if (assignedAdminId) {
+            updateData.assignedAdminId = assignedAdminId;
+        }
+
+        const currentRequest = await prisma.request.findUnique({
+            where: { id },
+            select: { type: true, createdById: true }
+        });
+
+        const request = await prisma.request.update({
+            where: { id },
+            data: updateData,
+            include: {
+                department: {
+                    select: { name: true },
+                },
+                createdBy: {
+                    select: { name: true, email: true },
+                },
+            },
+        });
+
+        // If this was an account approval request, update user status
+        if (currentRequest?.type === "ACCOUNT_APPROVAL") {
+            await prisma.user.update({
+                where: { id: currentRequest.createdById },
+                data: { status: status === "APPROVED" ? "ACTIVE" : "REJECTED" }
+            });
+        }
+
+        // Handle LAB_SETUP creation on Approval
+        if (currentRequest?.type === "LAB_SETUP" && status === "APPROVED") {
+            // Check if lab already exists to prevent duplicates
+            const existingLab = await prisma.lab.findFirst({
+                where: {
+                    name: request.title,
+                    departmentId: request.departmentId
+                }
+            });
+
+            if (!existingLab) {
+                const { labCode, labCapacity, labLocation } = body;
+
+                // Generate a unique code if not provided
+                const finalCode = labCode || `LAB-${Math.floor(1000 + Math.random() * 9000)}`;
+                const finalCapacity = parseInt(labCapacity) || 0;
+
+                await prisma.lab.create({
+                    data: {
+                        name: request.title,
+                        code: finalCode,
+                        departmentId: request.departmentId,
+                        capacity: finalCapacity,
+                        location: labLocation || "Allocation Pending",
+                    }
+                });
+            }
+        }
+
+        // Handle LAB_SETUP updates on Completion (Admin)
+        if (currentRequest?.type === "LAB_SETUP" && status === "COMPLETED") {
+            const { labCode, labCapacity, labLocation } = body;
+
+            if (labCode || labCapacity || labLocation) {
+                // Find the lab created during approval
+                const existingLab = await prisma.lab.findFirst({
+                    where: {
+                        name: request.title,
+                        departmentId: request.departmentId
+                    }
+                });
+
+                if (existingLab) {
+                    await prisma.lab.update({
+                        where: { id: existingLab.id },
+                        data: {
+                            code: labCode || existingLab.code,
+                            capacity: parseInt(labCapacity) || existingLab.capacity,
+                            location: labLocation || existingLab.location,
+                        }
+                    });
+                }
+            }
+        }
+
+        return NextResponse.json(request);
+    } catch (error) {
+        console.error("Error updating request:", error);
+        return NextResponse.json(
+            { error: "Failed to update request" },
+            { status: 500 }
+        );
+    }
+}
